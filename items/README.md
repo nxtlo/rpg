@@ -9,9 +9,9 @@ This crate contains and implements items a character can equip and use.
     - [ ] Exotic
 
 - Weapon types.
-    - [ ] Primary weapon
-    - [ ] Special weapon
-    - [ ] Lethal weapon
+    - [x] Primary weapon
+    - [x] Special weapon
+    - [x] Lethal weapon
 
 - Armor types.
     - [ ] Helmet
