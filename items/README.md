@@ -11,11 +11,11 @@ This crate contains and implements items a character can equip and use.
 - Weapon types.
     - [ ] Primary weapon
     - [ ] Special weapon
-    - [ ] Heavy weapon
+    - [ ] Lethal weapon
 
 - Armor types.
     - [ ] Helmet
-    - [ ] Chest
+    - [ ] Robes 
     - [ ] Boots
     - [ ] Gloves
     - [ ] Special class
