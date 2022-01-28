@@ -4,9 +4,9 @@ This crate contains and implements items a character can equip and use.
 # TODO
 
 - Item rarirty
-    - [ ] Rare
-    - [ ] Legendry
-    - [ ] Exotic
+    - [x] Rare
+    - [x] Legendry
+    - [x] Exotic
 
 - Weapon types.
     - [x] Primary weapon
