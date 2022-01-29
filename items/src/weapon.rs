@@ -28,6 +28,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 use crate::item::ItemRarity;
 
 use rand::{prelude::SliceRandom, random};
@@ -35,27 +36,56 @@ use std::fmt::{Debug, Display};
 
 const UNKNOWN: &&str = &"UNKNOWN";
 
+/// ## Weapons have ammo, And ammo have a damage type.
+/// These are the available types.
+/// - [`WeaponAmmoType::Toxic`]
+///     - A toxic weapon that damage enemies overtime.
+/// - [`WeaponAmmoType::Radiant`]
+///     - A type of weapon ammo that can heal allies.
+/// - [`WeaponAmmoType::Void`]
+///     - A type of weapon ammo that consumes the enemy's health
+///     damaging them and debuffing for 5 seconds.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum WeaponAmmoType {
-    /// A toxic weapon that damage enemies overtime.
     Toxic,
-    /// A type of weapon ammo that can heal allies.
     Radiant,
-    /// A type of weapon ammo that consumes the enemy's health
-    /// damaging them and debuffing for 5 seconds.
     Void,
 }
 
+/**
+## Core weapon types.
+### Random drop weapon names for each type.
+[`WeaponType::Submachine`]
+- `Threaded Needle`
+- `Jotunn's Vigor`
+- `Hydra`
+
+[`WeaponType::Lethalmachine`]
+- `Scream`
+- `Sorrowbane`
+- `Death's whisper`
+
+[`WeaponType::Magicalmachine`]
+- `Underlight Angler`
+- `Bancrofts`
+- `Arondight`
+- `Hope`
+
+[`WeaponType::Machinegun`]
+- `Thunderlord`
+- `Dagger`
+- `Divine Ruin`
+*/
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum WeaponType {
     Submachine,
     Machinegun,
     Lethalmachine,
-    MagicalMachine,
+    Magicalmachine,
 }
 
 impl Default for WeaponType {
-    /// All weapons are primary type by default.
+    /// All weapon drops are submachine by default.
     fn default() -> Self {
         Self::Submachine
     }
@@ -78,23 +108,23 @@ impl WeaponType {
                     "can randomly roll with any two `WeaponAmmoType`."
                 )
             }
-            WeaponType::MagicalMachine => "A high velocity, ranged, magical weapon.",
+            WeaponType::Magicalmachine => "A high velocity, ranged, magical weapon.",
         }
     }
 }
 
 impl ToString for WeaponType {
+    /// Convert [`WeaponType`] enum name to a readble [`String`]
     fn to_string(&self) -> String {
-        match &Self::to_owned(&self) {
+        match &Self::into(*self) {
             WeaponType::Submachine => "Submachine Gun".to_string(),
             WeaponType::Machinegun => "Machine Gun".to_string(),
             WeaponType::Lethalmachine => "Lethal Weapon".to_string(),
-            WeaponType::MagicalMachine => "Magical Machine".to_string(),
+            WeaponType::Magicalmachine => "Magical Machine".to_string(),
         }
     }
 }
 
-/// Constant submachine gun names.
 fn generate_name(w: &WeaponType) -> Vec<&'static str> {
     match w {
         &WeaponType::Submachine => {
@@ -103,7 +133,7 @@ fn generate_name(w: &WeaponType) -> Vec<&'static str> {
         &WeaponType::Lethalmachine => {
             return vec!["Scream", "Sorrowbane", "Death's whisper"];
         }
-        &WeaponType::MagicalMachine => {
+        &WeaponType::Magicalmachine => {
             return vec!["Underlight Angler", "Bancrofts", "Arondight", "Hope"];
         }
         &WeaponType::Machinegun => {
@@ -131,7 +161,7 @@ fn auto_name<'a>(w: &WeaponType) -> Result<&'a str, Box<dyn std::error::Error>> 
                 .choose(&mut rand::thread_rng())
                 .unwrap_or(UNKNOWN)
         }
-        WeaponType::MagicalMachine => {
+        WeaponType::Magicalmachine => {
             pending = generate_name(w)
                 .choose(&mut rand::thread_rng())
                 .unwrap_or(UNKNOWN)
@@ -141,13 +171,13 @@ fn auto_name<'a>(w: &WeaponType) -> Result<&'a str, Box<dyn std::error::Error>> 
 }
 
 pub struct Weapon {
-    pub weapon_type: WeaponType,
+    weapon_type: WeaponType,
     rarity: ItemRarity,
     name: &'static str,
-    hash: u32,
+    hash: u8,
 }
 
-/// The base that all type of weapon implement.
+/// The base trait that all type of weapon implement.
 pub trait WeaponImpl {
     /// Creates a new weapon given its type.
     /// All types should be derived from `WeaponType`
@@ -156,14 +186,14 @@ pub trait WeaponImpl {
     /// Returns the weapon name.
     fn name(&self) -> &'static str;
     /// Returns the hash that was generated for this weapon.
-    fn hash(&self) -> u32;
+    fn hash(&self) -> u8;
     /// Return a read only of the item rarity.
     fn rarity(&self) -> ItemRarity;
 }
 
 impl Default for Weapon {
     fn default() -> Self {
-        let hash = random::<u32>();
+        let hash = random::<u8>();
         let rarity = random::<ItemRarity>();
         let weapon_type = WeaponType::default();
         let name = auto_name(&weapon_type).unwrap();
@@ -171,7 +201,7 @@ impl Default for Weapon {
             weapon_type,
             rarity,
             hash,
-            name: name,
+            name,
         }
     }
 }
@@ -192,7 +222,7 @@ impl WeaponImpl for Weapon {
         self.name
     }
 
-    fn hash(&self) -> u32 {
+    fn hash(&self) -> u8 {
         self.hash
     }
 
@@ -218,9 +248,10 @@ impl Display for Weapon {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Weapon(name={}, hash={}, type={})",
+            "Weapon(name={}, hash={}, type={}, description={})",
             self.name,
             self.hash,
+            self.weapon_type.to_string(),
             self.weapon_type.description()
         )
     }
@@ -228,15 +259,34 @@ impl Display for Weapon {
 
 #[test]
 fn test_weapon() {
-    use log::debug;
+    // Logging
+    use log::*;
+    set_max_level(LevelFilter::Info);
+    env_logger::init();
+
     // Default is submchine
     let sub = Weapon::new(None);
     assert_eq!(sub.weapon_type, WeaponType::Submachine);
-    debug!("{}", sub);
+    info!("{}", sub);
+
     let lethal = Weapon::new(Some(WeaponType::Lethalmachine));
     assert_eq!(lethal.weapon_type, WeaponType::Lethalmachine);
+
     let machine = Weapon::new(Some(WeaponType::Machinegun));
     assert_eq!(machine.weapon_type, WeaponType::Machinegun);
-    let magical = Weapon::new(Some(WeaponType::MagicalMachine));
-    assert_eq!(magical.weapon_type, WeaponType::MagicalMachine);
+
+    let magical = Weapon::new(Some(WeaponType::Magicalmachine));
+    assert_eq!(magical.weapon_type, WeaponType::Magicalmachine);
+
+    let weapons = vec![sub, lethal, machine]
+        .iter()
+        .take_while(
+            move |weapon|
+            generate_name(&weapon.weapon_type)
+            .contains(&weapon.name)
+        )
+        .map(move |weapon| weapon.to_string())
+        .collect::<Vec<String>>()
+        .join("\n");
+    info!("{}", weapons);
 }
