@@ -28,11 +28,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-use crate::item::ItemRarity;
+use crate::item::{ItemContainer, ItemRarity};
 
 use rand::{prelude::SliceRandom, random};
-use std::fmt::{Debug, Display};
+use std::fmt;
 
 const UNKNOWN: &&str = &"UNKNOWN";
 
@@ -170,6 +169,7 @@ fn auto_name<'a>(w: &WeaponType) -> Result<&'a str, Box<dyn std::error::Error>> 
     Ok(&*pending)
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Weapon {
     weapon_type: WeaponType,
     rarity: ItemRarity,
@@ -178,18 +178,6 @@ pub struct Weapon {
 }
 
 /// The base trait that all type of weapon implement.
-pub trait WeaponImpl {
-    /// Creates a new weapon given its type.
-    /// All types should be derived from `WeaponType`
-    /// If the type is None it will be random.
-    fn new(weapon_type: Option<WeaponType>) -> Weapon;
-    /// Returns the weapon name.
-    fn name(&self) -> &'static str;
-    /// Returns the hash that was generated for this weapon.
-    fn hash(&self) -> u8;
-    /// Return a read only of the item rarity.
-    fn rarity(&self) -> ItemRarity;
-}
 
 impl Default for Weapon {
     fn default() -> Self {
@@ -206,13 +194,38 @@ impl Default for Weapon {
     }
 }
 
-impl WeaponImpl for Weapon {
-    fn new(weapon_type: Option<WeaponType>) -> Weapon {
-        let wt = weapon_type.unwrap_or_default();
-        let name = auto_name(&wt).unwrap();
+impl fmt::Debug for Weapon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Weapon(name={}, hash={}, type={}, description={})",
+            self.name,
+            self.hash,
+            self.weapon_type.to_string(),
+            self.weapon_type.description(),
+        )
+    }
+}
+
+impl fmt::Display for Weapon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Weapon(name={}, hash={}, type={}, description={})",
+            self.name,
+            self.hash,
+            self.weapon_type.to_string(),
+            self.weapon_type.description()
+        )
+    }
+}
+
+impl ItemContainer<WeaponType, Weapon> for Weapon {
+    fn new(item_type: WeaponType) -> Weapon {
+        let name = auto_name(&item_type).unwrap();
         Weapon {
             name,
-            weapon_type: wt,
+            weapon_type: item_type,
             rarity: random::<ItemRarity>(),
             hash: Weapon::default().hash(),
         }
@@ -231,32 +244,6 @@ impl WeaponImpl for Weapon {
     }
 }
 
-impl Debug for Weapon {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Weapon(name={}, hash={}, type={}, description={})",
-            self.name,
-            self.hash,
-            self.weapon_type.to_string(),
-            self.weapon_type.description(),
-        )
-    }
-}
-
-impl Display for Weapon {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Weapon(name={}, hash={}, type={}, description={})",
-            self.name,
-            self.hash,
-            self.weapon_type.to_string(),
-            self.weapon_type.description()
-        )
-    }
-}
-
 #[test]
 fn test_weapon() {
     // Logging
@@ -264,27 +251,22 @@ fn test_weapon() {
     set_max_level(LevelFilter::Info);
     env_logger::init();
 
-    // Default is submchine
-    let sub = Weapon::new(None);
+    let sub = Weapon::new(WeaponType::Submachine);
     assert_eq!(sub.weapon_type, WeaponType::Submachine);
     info!("{}", sub);
 
-    let lethal = Weapon::new(Some(WeaponType::Lethalmachine));
+    let lethal = Weapon::new(WeaponType::Lethalmachine);
     assert_eq!(lethal.weapon_type, WeaponType::Lethalmachine);
 
-    let machine = Weapon::new(Some(WeaponType::Machinegun));
+    let machine = Weapon::new(WeaponType::Machinegun);
     assert_eq!(machine.weapon_type, WeaponType::Machinegun);
 
-    let magical = Weapon::new(Some(WeaponType::Magicalmachine));
+    let magical = Weapon::new(WeaponType::Magicalmachine);
     assert_eq!(magical.weapon_type, WeaponType::Magicalmachine);
 
     let weapons = vec![sub, lethal, machine]
         .iter()
-        .take_while(
-            move |weapon|
-            generate_name(&weapon.weapon_type)
-            .contains(&weapon.name)
-        )
+        .take_while(move |weapon| generate_name(&weapon.weapon_type).contains(&weapon.name))
         .map(move |weapon| weapon.to_string())
         .collect::<Vec<String>>()
         .join("\n");

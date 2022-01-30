@@ -19,3 +19,10 @@ This crate contains and implements items a character can equip and use.
     - [ ] Boots
     - [ ] Gloves
     - [ ] Special class
+
+This is the core impl for weapon, items, drops.
+- Container
+    - [ ] Weapon drops
+        - [ ] drop chances.
+    - [ ] Armor drops
+        - [ ] drop chanes.
