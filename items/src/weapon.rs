@@ -33,6 +33,8 @@ use crate::item::{ItemContainer, ItemRarity};
 use rand::{prelude::SliceRandom, random};
 use std::fmt;
 
+use utilities::generators::Generator;
+
 const UNKNOWN: &&str = &"UNKNOWN";
 
 /// ## Weapons have ammo, And ammo have a damage type.
@@ -124,51 +126,63 @@ impl ToString for WeaponType {
     }
 }
 
-fn generate_name(w: &WeaponType) -> Vec<&'static str> {
-    match w {
-        &WeaponType::Submachine => {
-            return vec!["Threaded Needle", "Jotunn'a Vigor", "Hydra"];
+/// Core weapon generator. This struct implements [`Generator`].
+/// This is used for generating weapon, randomizing names and stats depends on its type.
+pub struct WeaponGenerator<'a> {
+    item: &'a WeaponType,
+}
+
+impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
+    fn generate_name(&self) -> Vec<&'static str> {
+        match self.item {
+            &WeaponType::Submachine => {
+                return vec!["Threaded Needle", "Jotunn'a Vigor", "Hydra"];
+            }
+            &WeaponType::Lethalmachine => {
+                return vec!["Scream", "Sorrowbane", "Death's whisper"];
+            }
+            &WeaponType::Magicalmachine => {
+                return vec!["Underlight Angler", "Bancrofts", "Arondight", "Hope"];
+            }
+            &WeaponType::Machinegun => {
+                return vec!["Thnuderlord", "Dagger", "Divine Ruin"];
+            }
         }
-        &WeaponType::Lethalmachine => {
-            return vec!["Scream", "Sorrowbane", "Death's whisper"];
+    }
+
+    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error + Send + 'static>> {
+        let pending: &'static str;
+        match self.item {
+            WeaponType::Submachine => {
+                pending = self
+                    .generate_name()
+                    .choose(&mut rand::thread_rng())
+                    .unwrap_or(UNKNOWN)
+            }
+            WeaponType::Machinegun => {
+                pending = self
+                    .generate_name()
+                    .choose(&mut rand::thread_rng())
+                    .unwrap_or(UNKNOWN)
+            }
+            WeaponType::Lethalmachine => {
+                pending = self
+                    .generate_name()
+                    .choose(&mut rand::thread_rng())
+                    .unwrap_or(UNKNOWN)
+            }
+            WeaponType::Magicalmachine => {
+                pending = self
+                    .generate_name()
+                    .choose(&mut rand::thread_rng())
+                    .unwrap_or(UNKNOWN)
+            }
         }
-        &WeaponType::Magicalmachine => {
-            return vec!["Underlight Angler", "Bancrofts", "Arondight", "Hope"];
-        }
-        &WeaponType::Machinegun => {
-            return vec!["Thnuderlord", "Dagger", "Divine Ruin"];
-        }
+        Ok(&*pending)
     }
 }
 
-/// Generates an auto weapon name depends on the type.
-fn auto_name<'a>(w: &WeaponType) -> Result<&'a str, Box<dyn std::error::Error>> {
-    let pending: &'a str;
-    match &w {
-        WeaponType::Submachine => {
-            pending = generate_name(w)
-                .choose(&mut rand::thread_rng())
-                .unwrap_or(UNKNOWN)
-        }
-        WeaponType::Machinegun => {
-            pending = generate_name(w)
-                .choose(&mut rand::thread_rng())
-                .unwrap_or(UNKNOWN)
-        }
-        WeaponType::Lethalmachine => {
-            pending = generate_name(w)
-                .choose(&mut rand::thread_rng())
-                .unwrap_or(UNKNOWN)
-        }
-        WeaponType::Magicalmachine => {
-            pending = generate_name(w)
-                .choose(&mut rand::thread_rng())
-                .unwrap_or(UNKNOWN)
-        }
-    }
-    Ok(&*pending)
-}
-
+/// The base trait that all type of weapon implement.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Weapon {
     weapon_type: WeaponType,
@@ -177,19 +191,15 @@ pub struct Weapon {
     hash: u8,
 }
 
-/// The base trait that all type of weapon implement.
-
 impl Default for Weapon {
     fn default() -> Self {
-        let hash = random::<u8>();
-        let rarity = random::<ItemRarity>();
         let weapon_type = WeaponType::default();
-        let name = auto_name(&weapon_type).unwrap();
+        let generator = WeaponGenerator { item: &weapon_type };
         Weapon {
             weapon_type,
-            rarity,
-            hash,
-            name,
+            rarity: random::<ItemRarity>(),
+            hash: random::<u8>(),
+            name: generator.auto_name().unwrap(),
         }
     }
 }
@@ -222,9 +232,9 @@ impl fmt::Display for Weapon {
 
 impl ItemContainer<WeaponType, Weapon> for Weapon {
     fn new(item_type: WeaponType) -> Weapon {
-        let name = auto_name(&item_type).unwrap();
+        let gen = WeaponGenerator { item: &item_type };
         Weapon {
-            name,
+            name: gen.auto_name().unwrap(),
             weapon_type: item_type,
             rarity: random::<ItemRarity>(),
             hash: Weapon::default().hash(),
@@ -266,7 +276,12 @@ fn test_weapon() {
 
     let weapons = vec![sub, lethal, machine]
         .iter()
-        .take_while(move |weapon| generate_name(&weapon.weapon_type).contains(&weapon.name))
+        .take_while(move |weapon| {
+            let gen = WeaponGenerator {
+                item: &weapon.weapon_type,
+            };
+            gen.generate_name().contains(&weapon.name)
+        })
         .map(move |weapon| weapon.to_string())
         .collect::<Vec<String>>()
         .join("\n");
