@@ -33,6 +33,8 @@ use rand::{
     Rng,
 };
 
+use utilities::generators::Generator;
+
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ItemRarity {
     Rare,
@@ -58,6 +60,32 @@ pub enum ItemType {
     Armor,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct ItemGenerator<'a> {
+    item: &'a ItemType,
+}
+
+impl<'a> Generator<ItemType> for ItemGenerator<'a> {
+    fn generate_name(&self) -> Vec<&'static str> {
+        match &self.item {
+            ItemType::Weapon => todo!(),
+            ItemType::Container => todo!(),
+            ItemType::Consumable => todo!(),
+            ItemType::Armor => todo!(),
+        }
+    }
+
+    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error>> {
+        let _pending: &'static str;
+        match self.item {
+            ItemType::Weapon => todo!(),
+            ItemType::Container => todo!(),
+            ItemType::Consumable => todo!(),
+            ItemType::Armor => todo!(),
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Item {
     name: &'static str,
@@ -67,7 +95,7 @@ pub struct Item {
 }
 
 impl ItemContainer<ItemType, Item> for Item {
-    fn new(item_type: ItemType) -> Item {
+    fn new(_item_type: ItemType) -> Item {
         todo!()
     }
 
@@ -123,7 +151,7 @@ impl ItemContainer<ItemType, Item> for Item {
 ///     }
 /// }
 /// ```
-pub trait ItemContainer<IT, RT>: Send + 'static {
+pub trait ItemContainer<IT, RT: ?Sized>: Send + 'static {
     /// Creates a new item given its type.
     fn new(item_type: IT) -> RT;
     fn name(&self) -> &'static str;

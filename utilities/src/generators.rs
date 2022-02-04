@@ -31,5 +31,5 @@
 /// A struct that generates data for our objects.
 pub trait Generator<T> {
     fn generate_name(&self) -> Vec<&'static str>;
-    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error + Send + 'static>>;
+    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error>>;
 }

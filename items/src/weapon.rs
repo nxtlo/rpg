@@ -95,7 +95,7 @@ impl Default for WeaponType {
 impl WeaponType {
     /// Return a minimal description about the weapon type.
     pub fn description(&self) -> &'static str {
-        match *self {
+        match self {
             WeaponType::Submachine => "A white ammo standard primary submachine gun.",
             WeaponType::Machinegun => {
                 concat!(
@@ -117,7 +117,7 @@ impl WeaponType {
 impl ToString for WeaponType {
     /// Convert [`WeaponType`] enum name to a readble [`String`]
     fn to_string(&self) -> String {
-        match &Self::into(*self) {
+        match Self::into(*self) {
             WeaponType::Submachine => "Submachine Gun".to_string(),
             WeaponType::Machinegun => "Machine Gun".to_string(),
             WeaponType::Lethalmachine => "Lethal Weapon".to_string(),
@@ -150,7 +150,7 @@ impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
         }
     }
 
-    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error + Send + 'static>> {
+    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error>> {
         let pending: &'static str;
         match self.item {
             WeaponType::Submachine => {
@@ -182,7 +182,6 @@ impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
     }
 }
 
-/// The base trait that all type of weapon implement.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Weapon {
     weapon_type: WeaponType,
