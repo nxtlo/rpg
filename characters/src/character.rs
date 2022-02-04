@@ -128,7 +128,7 @@ impl BuiltinChar {
 
 /// Core trait that all non-builtin characters should
 /// implement from.
-pub trait Character<Cc = CharacterClass>: Send + Sync {
+pub trait Character<Cc = CharacterClass>: Send + 'static {
     /// Creates a new character
     ///
     /// ## Returns
@@ -150,7 +150,7 @@ pub trait Character<Cc = CharacterClass>: Send + Sync {
 }
 
 /// Core trait that all builtin characters should implement.
-trait BuiltinCharacter<Cc = CharacterClass>: Send + Sync {
+trait BuiltinCharacter<Cc = CharacterClass>: Send + 'static {
     fn new() -> BuiltinCharacterImpl<Cc>;
 }
 
