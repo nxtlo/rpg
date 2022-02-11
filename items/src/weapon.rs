@@ -35,7 +35,7 @@ use std::fmt;
 
 use utilities::generators::Generator;
 
-const UNKNOWN: &&str = &"UNKNOWN";
+static UNKNOWN: &str = &"UNKNOWN";
 
 /// ## Weapons have ammo, And ammo have a damage type.
 /// These are the available types.
@@ -157,25 +157,25 @@ impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
                 pending = self
                     .generate_name()
                     .choose(&mut rand::thread_rng())
-                    .unwrap_or(UNKNOWN)
+                    .unwrap_or(&UNKNOWN)
             }
             WeaponType::Machinegun => {
                 pending = self
                     .generate_name()
                     .choose(&mut rand::thread_rng())
-                    .unwrap_or(UNKNOWN)
+                    .unwrap_or(&UNKNOWN)
             }
             WeaponType::Lethalmachine => {
                 pending = self
                     .generate_name()
                     .choose(&mut rand::thread_rng())
-                    .unwrap_or(UNKNOWN)
+                    .unwrap_or(&UNKNOWN)
             }
             WeaponType::Magicalmachine => {
                 pending = self
                     .generate_name()
                     .choose(&mut rand::thread_rng())
-                    .unwrap_or(UNKNOWN)
+                    .unwrap_or(&UNKNOWN)
             }
         }
         Ok(&*pending)

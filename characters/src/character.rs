@@ -28,13 +28,15 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use items::components::Health;
+
 /// Core character classes.
 ///
 /// For more information run.
 ///
 /// ```
 /// use characters::CharacterClass;
-/// 
+///
 /// let assassin = CharacterClass::Assassin;
 /// assassin.description();
 /// ```
@@ -134,6 +136,7 @@ pub trait Character<Cc = CharacterClass>: Send + 'static {
     /// ## Returns
     /// [`CharacterImpl`]
     /// A standard character implementation.
+    #[must_use]
     fn new() -> CharacterImpl<Cc>;
     /// The character's name.
     ///
@@ -151,6 +154,7 @@ pub trait Character<Cc = CharacterClass>: Send + 'static {
 
 /// Core trait that all builtin characters should implement.
 trait BuiltinCharacter<Cc = CharacterClass>: Send + 'static {
+    #[must_use]
     fn new() -> BuiltinCharacterImpl<Cc>;
 }
 
@@ -196,6 +200,7 @@ impl CharacterImpl {
 struct BuiltinCharacterImpl<Cc = CharacterClass> {
     class: Cc,
     builtin: Box<BuiltinChar>,
+    health: Health,
 }
 // Builtin characters.
 
@@ -231,10 +236,12 @@ impl BuiltinCharacterImpl {
 pub struct Vamp;
 
 impl BuiltinCharacter for Vamp {
+    #[must_use]
     fn new() -> BuiltinCharacterImpl {
         BuiltinCharacterImpl {
             class: CharacterClass::Vampire,
             builtin: box BuiltinChar::Vamp,
+            health: Health::new(),
         }
     }
 }
@@ -243,10 +250,12 @@ impl BuiltinCharacter for Vamp {
 pub struct Yemoja;
 
 impl BuiltinCharacter for Yemoja {
+    #[must_use]
     fn new() -> BuiltinCharacterImpl {
         BuiltinCharacterImpl {
             class: CharacterClass::Warlock,
             builtin: box BuiltinChar::Yemoja,
+            health: Health::new(),
         }
     }
 }
@@ -255,10 +264,12 @@ impl BuiltinCharacter for Yemoja {
 pub struct Susanoo;
 
 impl BuiltinCharacter for Susanoo {
+    #[must_use]
     fn new() -> BuiltinCharacterImpl {
         BuiltinCharacterImpl {
             class: CharacterClass::Assassin,
             builtin: box BuiltinChar::Susanoo,
+            health: Health::new(),
         }
     }
 }
@@ -267,10 +278,12 @@ impl BuiltinCharacter for Susanoo {
 pub struct Tyr;
 
 impl BuiltinCharacter for Tyr {
+    #[must_use]
     fn new() -> BuiltinCharacterImpl {
         BuiltinCharacterImpl {
             class: CharacterClass::Warrior,
             builtin: box BuiltinChar::Tyr,
+            health: Health::new(),
         }
     }
 }
@@ -283,8 +296,20 @@ mod tests {
 
     #[test]
     fn test_vamp() {
-        let vamp = Vamp::new();
+        let mut vamp = Vamp::new();
         println!("{}", vamp.repr());
+
+        println!("{}", vamp.health.get_health());
+
+        vamp.health.drip_random();
+        println!("{}", vamp.health);
+
+        vamp.health.incr(10);
+        println!("{}", vamp.health);
+        vamp.health.drip(2);
+        println!("{}", vamp.health.regen());
+        println!("{}", vamp.health);
+
         assert_eq!(vamp.class, CharacterClass::Vampire);
         assert_eq!(vamp.builtin, box BuiltinChar::Vamp);
     }

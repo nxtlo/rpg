@@ -29,5 +29,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pub mod armor;
+pub mod components;
 pub mod item;
 pub mod weapon;
