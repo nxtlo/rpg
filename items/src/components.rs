@@ -33,12 +33,57 @@
 use rand::{thread_rng, Rng};
 use std::{cell, thread, time};
 
+use super::item::Item;
+use super::weapon::Weapon;
+
+/// Core object inventory component.
+///
+/// This includes weapons items it ownns, cosmetics, etc.
+#[derive(Clone, Debug)]
 pub struct Inventory {
-    items: Vec<super::item::Item>,
-    weapons: Vec<super::weapon::Weapon>,
+    items: Box<Vec<Item>>,
+    weapons: Box<Vec<Weapon>>,
+    max_size: u32,
 }
 
-/// Health bar for characters and other objects that can live.
+impl Inventory {
+    /// Creates a new inventory object.
+    pub fn new(items: Vec<Item>, weapons: Vec<Weapon>) -> Inventory {
+        Inventory {
+            items: box items,
+            weapons: box weapons,
+            max_size: 50,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        !self.is_full()
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.max_size == (self.items.len() + self.weapons.len()) as u32
+    }
+
+    pub fn get_weapons(&self) -> Vec<Weapon> {
+        self.weapons.to_vec()
+    }
+
+    pub fn put_weapon(&mut self, weapon: &Weapon) -> anyhow::Result<()> {
+        if self.is_full() {
+            return Err(anyhow::anyhow!("Inventory is full"));
+        }
+
+        self.weapons.push(weapon.to_owned());
+
+        Ok(())
+    }
+
+    pub fn get_items(&self) -> &Vec<Item> {
+        &self.items
+    }
+}
+
+/// Core health component for objects that can live.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Health {
     current_health: cell::Cell<u8>,
@@ -53,10 +98,6 @@ impl PartialOrd<Health> for Health {
     }
 
     fn le(&self, other: &Health) -> bool {
-        // Pattern `Some(Less | Eq)` optimizes worse than negating `None | Some(Greater)`.
-        // FIXME: The root cause was fixed upstream in LLVM with:
-        // https://github.com/llvm/llvm-project/commit/9bad7de9a3fb844f1ca2965f35d0c2a3d1e11775
-        // Revert this workaround once support for LLVM 12 gets dropped.
         self.current_health.get() <= other.current_health.get()
     }
 
@@ -88,6 +129,7 @@ impl Health {
         }
     }
 
+    // TODO: Fix overflow issues.
     pub fn regen(&mut self) -> u8 {
         let mut curr_health = self.current_health.get();
 
@@ -145,6 +187,10 @@ impl Health {
     pub fn incr_random(&mut self) -> u8 {
         let mut curr_health = *self.current_health.get_mut();
 
+        if self.is_killed() {
+            curr_health = 1
+        }
+
         // Check if we're not dead nor at max health bar.
         if self._validate() {
             let range: u8 = thread_rng().gen_range(10..=curr_health * 2).into();
@@ -158,7 +204,16 @@ impl Health {
     /// Kill this health bar by setting it to 0 and drop its value.
     pub fn kill(&self) {
         self.current_health.set(0);
-        drop(self.current_health.get());
+        drop(self.current_health.as_ptr().to_owned());
+    }
+
+    pub fn revive(&self) -> anyhow::Result<bool> {
+        if self.is_killed() {
+            self.current_health.set(100);
+            Ok(true)
+        } else {
+            Err(anyhow::anyhow!("Character is already alive!"))
+        }
     }
 
     /// Whether this health is killed or not.
@@ -189,5 +244,16 @@ mod tests {
         let mut health = Health::new();
         health.drip_random();
         print!("{}", health.get_health());
+
+        health.kill();
+        assert!(health.is_killed());
+
+        // Always true.
+        if health.is_killed() {
+            health.revive().unwrap();
+        }
+
+        health.incr_random();
+        println!("{}", health.get_health());
     }
 }

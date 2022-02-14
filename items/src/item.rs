@@ -52,7 +52,7 @@ impl Distribution<ItemRarity> for Standard {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum ItemType {
     Weapon,
     Container,
@@ -86,7 +86,7 @@ impl<'a> Generator<ItemType> for ItemGenerator<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Item {
     name: &'static str,
     item_type: ItemType,

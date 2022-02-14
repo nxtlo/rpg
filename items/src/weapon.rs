@@ -83,6 +83,7 @@ pub enum WeaponType {
     Machinegun,
     Lethalmachine,
     Magicalmachine,
+    Blade,
 }
 
 impl Default for WeaponType {
@@ -110,6 +111,7 @@ impl WeaponType {
                 )
             }
             WeaponType::Magicalmachine => "A high velocity, ranged, magical weapon.",
+            WeaponType::Blade => "A weapon that can be used to slash enemies.",
         }
     }
 }
@@ -117,11 +119,12 @@ impl WeaponType {
 impl ToString for WeaponType {
     /// Convert [`WeaponType`] enum name to a readble [`String`]
     fn to_string(&self) -> String {
-        match Self::into(*self) {
+        match self {
             WeaponType::Submachine => "Submachine Gun".to_string(),
             WeaponType::Machinegun => "Machine Gun".to_string(),
             WeaponType::Lethalmachine => "Lethal Weapon".to_string(),
             WeaponType::Magicalmachine => "Magical Machine".to_string(),
+            WeaponType::Blade => "Blade".to_string(),
         }
     }
 }
@@ -146,6 +149,9 @@ impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
             }
             &WeaponType::Machinegun => {
                 return vec!["Thnuderlord", "Dagger", "Divine Ruin"];
+            }
+            &WeaponType::Blade => {
+                return vec!["Katana", "Wind Deamon", "Serrated Edge", "Soul Eater"];
             }
         }
     }
@@ -172,6 +178,12 @@ impl<'a> Generator<WeaponType> for WeaponGenerator<'a> {
                     .unwrap_or(&UNKNOWN)
             }
             WeaponType::Magicalmachine => {
+                pending = self
+                    .generate_name()
+                    .choose(&mut rand::thread_rng())
+                    .unwrap_or(&UNKNOWN)
+            }
+            WeaponType::Blade => {
                 pending = self
                     .generate_name()
                     .choose(&mut rand::thread_rng())

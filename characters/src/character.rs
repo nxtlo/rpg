@@ -28,7 +28,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use items::components::Health;
+use items::{
+    components::{Health, Inventory},
+    item::ItemContainer,
+    weapon::{Weapon, WeaponType},
+};
 
 /// Core character classes.
 ///
@@ -196,11 +200,12 @@ impl CharacterImpl {
 /// Core builtin characters struct.
 ///
 /// This struct is special and only returned by builtin characters.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 struct BuiltinCharacterImpl<Cc = CharacterClass> {
     class: Cc,
     builtin: Box<BuiltinChar>,
     health: Health,
+    inventory: Inventory,
 }
 // Builtin characters.
 
@@ -238,10 +243,17 @@ pub struct Vamp;
 impl BuiltinCharacter for Vamp {
     #[must_use]
     fn new() -> BuiltinCharacterImpl {
+        let main = Weapon::new(WeaponType::Submachine);
+        let seondary = Weapon::new(WeaponType::Lethalmachine);
+
         BuiltinCharacterImpl {
             class: CharacterClass::Vampire,
             builtin: box BuiltinChar::Vamp,
             health: Health::new(),
+            inventory: Inventory::new(
+                vec![],               // Items. This is currently empty.
+                vec![main, seondary], // Weapons
+            ),
         }
     }
 }
@@ -252,10 +264,16 @@ pub struct Yemoja;
 impl BuiltinCharacter for Yemoja {
     #[must_use]
     fn new() -> BuiltinCharacterImpl {
+        let main = Weapon::new(WeaponType::Submachine);
+        let seondary = Weapon::new(WeaponType::Magicalmachine);
         BuiltinCharacterImpl {
             class: CharacterClass::Warlock,
             builtin: box BuiltinChar::Yemoja,
             health: Health::new(),
+            inventory: Inventory::new(
+                vec![],               // Items. This is currently empty.
+                vec![main, seondary], // Weapons
+            ),
         }
     }
 }
@@ -266,10 +284,17 @@ pub struct Susanoo;
 impl BuiltinCharacter for Susanoo {
     #[must_use]
     fn new() -> BuiltinCharacterImpl {
+        let main = Weapon::new(WeaponType::Submachine);
+        let seondary = Weapon::new(WeaponType::Blade);
+
         BuiltinCharacterImpl {
             class: CharacterClass::Assassin,
             builtin: box BuiltinChar::Susanoo,
             health: Health::new(),
+            inventory: Inventory::new(
+                vec![],               // Items. This is currently empty.
+                vec![main, seondary], // Weapons
+            ),
         }
     }
 }
@@ -280,10 +305,17 @@ pub struct Tyr;
 impl BuiltinCharacter for Tyr {
     #[must_use]
     fn new() -> BuiltinCharacterImpl {
+        let main = Weapon::new(WeaponType::Submachine);
+        let seondary = Weapon::new(WeaponType::Machinegun);
+
         BuiltinCharacterImpl {
             class: CharacterClass::Warrior,
             builtin: box BuiltinChar::Tyr,
             health: Health::new(),
+            inventory: Inventory::new(
+                vec![],               // Items. This is currently empty.
+                vec![main, seondary], // Weapons
+            ),
         }
     }
 }
@@ -299,6 +331,14 @@ mod tests {
         let mut vamp = Vamp::new();
         println!("{}", vamp.repr());
 
+        let vamp_weapons = vamp
+            .inventory
+            .get_weapons()
+            .iter()
+            .map(|w| w.borrow().name())
+            .collect::<Vec<&str>>();
+        println!("{}", vamp_weapons.join("\n"));
+
         println!("{}", vamp.health.get_health());
 
         vamp.health.drip_random();
@@ -308,7 +348,6 @@ mod tests {
         println!("{}", vamp.health);
         vamp.health.drip(2);
         println!("{}", vamp.health.regen());
-        println!("{}", vamp.health);
 
         assert_eq!(vamp.class, CharacterClass::Vampire);
         assert_eq!(vamp.builtin, box BuiltinChar::Vamp);
