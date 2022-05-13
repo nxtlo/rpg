@@ -33,8 +33,6 @@ use rand::{
     Rng,
 };
 
-use utilities::generators::Generator;
-
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ItemRarity {
     Rare,
@@ -60,14 +58,10 @@ pub enum ItemType {
     Armor,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ItemGenerator<'a> {
-    item: &'a ItemType,
-}
+impl Generator for ItemType {
 
-impl<'a> Generator<ItemType> for ItemGenerator<'a> {
     fn generate_name(&self) -> Vec<&'static str> {
-        match &self.item {
+        match &self {
             ItemType::Weapon => todo!(),
             ItemType::Container => todo!(),
             ItemType::Consumable => todo!(),
@@ -75,9 +69,9 @@ impl<'a> Generator<ItemType> for ItemGenerator<'a> {
         }
     }
 
-    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error>> {
+    fn auto_name(&self) -> &'static str {
         let _pending: &'static str;
-        match self.item {
+        match self {
             ItemType::Weapon => todo!(),
             ItemType::Container => todo!(),
             ItemType::Consumable => todo!(),
@@ -86,75 +80,21 @@ impl<'a> Generator<ItemType> for ItemGenerator<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Item {
-    name: &'static str,
-    item_type: ItemType,
-    rarity: ItemRarity,
-    hash: u8,
-}
-
-impl ItemContainer<ItemType, Item> for Item {
-    fn new(_item_type: ItemType) -> Item {
-        todo!()
-    }
-
-    fn name(&self) -> &'static str {
-        todo!()
-    }
-
-    fn hash(&self) -> u8 {
-        todo!()
-    }
-
-    fn rarity(&self) -> ItemRarity {
-        todo!()
-    }
-}
-
-/// Core trait that all items should implement.
-/// ## NOTE
-/// [`Item`] is just an item. Which can be one of [`ItemType`].
-///
-/// ## Generic Items.
-/// This trait takes two generic types `<IT, RT>`.
-///
-/// First is the `Item Type`, This should be an enum
-/// contain all types of your item, i.e., [`crate::weapon::WeaponType`], [`ItemType`] and others.
-///
-/// The second is `RT` which's the return type of the item. This will always be the items itself.
-///
-/// i.e., [`Item`], [`crate::weapon::Weapon`]
-///
-/// ## Example
-/// ```
-/// use items::item::{ItemContainer, ItemRarity};
-///
-/// struct MyItem {
-///     name: &'static str,
-///     item_type: MyItemType,
-///     rarity: ItemRarity,
-///     hash: u8
-/// }
-///
-/// enum MyItemType {
-///     Freezer,
-///     Solar
-/// }
-///
-/// impl ItemContainer<MyItemType, MyItem> for MyItem {
-///     fn new(item_type: MyItemType) -> MyItem {
-///         let hash = rand::random::<u8>();
-///         let rarity = rand::random::<ItemRarity>();
-///         let name = "Some name";
-///         MyItem{name, item_type, rarity, hash}
-///     }
-/// }
-/// ```
-pub trait ItemContainer<IT, RT: ?Sized>: Send + 'static {
-    /// Creates a new item given its type.
-    fn new(item_type: IT) -> RT;
+/// Types that have a name and a description.
+pub trait MetaData {
     fn name(&self) -> &'static str;
-    fn hash(&self) -> u8;
+    fn description(&self) -> &'static str;
+}
+
+/// Types that are able to generate names depend on the type of the item.
+pub trait Generator {
+    fn generate_name(&self) -> Vec<&'static str>;
+    fn auto_name(&self) -> &'static str;
+}
+
+pub trait Item {
+    fn name(&self) -> &'static str;
+    fn id(&self) -> u8;
+    fn item_type(&self) -> ItemType;
     fn rarity(&self) -> ItemRarity;
 }

@@ -2,6 +2,5 @@
 members = [
     "abilites",
     "characters",
-    "items",
-    "utilities"
+    "components",
 ]

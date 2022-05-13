@@ -28,9 +28,53 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![feature(box_syntax)]
+//! A crate includes all components a character can have. i.e., Inventory, Health, etc.
 
-pub mod armor;
-pub mod components;
-pub mod item;
-pub mod weapon;
+use crate::weapon::Weapon;
+
+/// Core object inventory component.
+///
+/// This includes weapons items it ownns, cosmetics, etc.
+#[derive(Clone, Debug)]
+pub struct Inventory {
+    weapons: Vec<Weapon>,
+    max_size: u32,
+}
+
+impl Default for Inventory {
+    fn default() -> Self {
+        Self {
+            weapons: vec![],
+            max_size: 50,
+        }
+    }
+}
+
+impl Inventory {
+    /// Creates a new inventory object.
+    pub fn new() -> Inventory {
+        Self::default()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        !self.is_full()
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.max_size == (self.weapons.len() + 1) as u32
+    }
+
+    pub fn get_weapons(&self) -> Vec<Weapon> {
+        self.weapons.to_vec()
+    }
+
+    pub fn put_weapon(&mut self, weapon: &Weapon) -> anyhow::Result<()> {
+        if self.is_full() {
+            return Err(anyhow::anyhow!("Inventory is full"));
+        }
+
+        self.weapons.push(weapon.to_owned());
+
+        Ok(())
+    }
+}

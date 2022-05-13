@@ -28,11 +28,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use items::{
-    components::{Health, Inventory},
-    item::ItemContainer,
-    weapon::{Weapon, WeaponType},
+use components::{
+    health::Health,
+    inventory::Inventory,
+    // weapon,
 };
+use std::sync::Arc;
 
 /// Core character classes.
 ///
@@ -44,12 +45,18 @@ use items::{
 /// let assassin = CharacterClass::Assassin;
 /// assassin.description();
 /// ```
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug)]
 pub enum CharacterClass {
     Warrior,
     Warlock,
     Vampire,
     Assassin,
+}
+
+impl Default for CharacterClass {
+    fn default() -> Self {
+        CharacterClass::Warrior
+    }
 }
 
 impl CharacterClass {
@@ -59,7 +66,12 @@ impl CharacterClass {
     /// [`String`]
     /// The character enum field name as a String.
     pub fn name(&self) -> String {
-        "TODO".to_string()
+        match self {
+            CharacterClass::Warrior => "Warrior".to_string(),
+            CharacterClass::Warlock => "Warlock".to_string(),
+            CharacterClass::Vampire => "Vampire".to_string(),
+            CharacterClass::Assassin => "Assassin".to_string(),
+        }
     }
 
     /// Small description/lore about the character's background
@@ -70,30 +82,14 @@ impl CharacterClass {
 
 /// Builtin character enum.
 #[derive(PartialEq, Debug, Clone)]
-enum BuiltinChar {
+enum BuiltinCharacter {
     Tyr,
     Yemoja,
     Vamp,
     Susanoo,
 }
 
-impl PartialEq<&mut BuiltinChar> for BuiltinChar {
-    fn ne(&self, other: &&mut BuiltinChar) -> bool {
-        self == other
-    }
-
-    fn eq(&self, other: &&mut BuiltinChar) -> bool {
-        self == other
-    }
-}
-
-#[allow(dead_code)]
-impl BuiltinChar {
-    /// Returns the string version of the character type name.
-    ///
-    /// ## Returns
-    /// [`String`]
-    /// The character enum field name as a String.
+impl BuiltinCharacter {
     pub fn name(&self) -> String {
         match self {
             Self::Tyr => "Tyr".to_string(),
@@ -132,250 +128,70 @@ impl BuiltinChar {
     }
 }
 
-/// Core trait that all non-builtin characters should
-/// implement from.
-pub trait Character<Cc = CharacterClass>: Send + 'static {
-    /// Creates a new character
-    ///
-    /// ## Returns
-    /// [`CharacterImpl`]
-    /// A standard character implementation.
-    #[must_use]
-    fn new() -> CharacterImpl<Cc>;
-    /// The character's name.
-    ///
-    /// ## Returns
-    /// [`String`]
-    /// The character name as a str.
-    fn name() -> String;
-    /// A minimal description about the character.
-    ///
-    /// ## Returns
-    /// [`String`]
-    /// Some description about the character.
-    fn description() -> String;
-}
-
-/// Core trait that all builtin characters should implement.
-trait BuiltinCharacter<Cc = CharacterClass>: Send + 'static {
-    #[must_use]
-    fn new() -> BuiltinCharacterImpl<Cc>;
-}
-
-/// Core character struct returned for all
-/// newly created characters.
-///
-/// ## About Characters
-/// Characters are the core objects a player can play with, They can hold
-/// weapons, consumebles, items, Use and fight with those items.
-///
-/// ## Making your own character.
-///
-/// ```
-/// use characters::*;
-///
-/// struct Demon;
-///
-/// impl Character for Demon {
-///     fn new() -> CharacterImpl<CharacterClass> {
-///         CharacterImpl{class: CharacterClass::Vampire}
-///     }
-///     fn name() -> String {"Alucard".to_string()}
-///     fn description() -> String {"Some description".to_string()}
-/// }
-/// ```
-///
-#[derive(PartialEq, Debug, Clone)]
-pub struct CharacterImpl<Cc = CharacterClass> {
-    pub class: Cc,
-}
-
-// Default character impls are not builtins.
-impl CharacterImpl {
-    pub fn is_builtin() -> bool {
+pub trait Character {
+    fn new() -> CharacterImpl;
+    fn name(&self) -> String;
+    fn inventory(&self) -> &Inventory;
+    fn health(&self) -> &Health;
+    fn description(&self) -> String;
+    fn is_builtin(&self) -> bool {
         false
     }
 }
 
-/// Core builtin characters struct.
-///
-/// This struct is special and only returned by builtin characters.
 #[derive(Debug, Clone)]
-struct BuiltinCharacterImpl<Cc = CharacterClass> {
+pub struct CharacterImpl<Cc = CharacterClass> {
     class: Cc,
-    builtin: Box<BuiltinChar>,
-    health: Health,
-    inventory: Inventory,
+    health: Arc<Health>,
+    inventory: Arc<Inventory>,
 }
+
+impl Default for CharacterImpl {
+    fn default() -> Self {
+        Self {
+            class: CharacterClass::default(),
+            health: Arc::new(Health::default()),
+            inventory: Arc::new(Inventory::default()),
+        }
+    }
+}
+
+impl Character for CharacterImpl {
+    fn new() -> CharacterImpl {
+        CharacterImpl::default()
+    }
+
+    fn name(&self) -> String {
+        self.class.name()
+    }
+
+    fn inventory(&self) -> &Inventory {
+        &self.inventory
+    }
+
+    fn health(&self) -> &Health {
+        &self.health
+    }
+
+    fn description(&self) -> String {
+        self.class.description()
+    }
+
+    fn is_builtin(&self) -> bool {
+        false
+    }
+}
+
 // Builtin characters.
-
-#[allow(dead_code)]
-impl BuiltinCharacterImpl {
-    pub fn is_builtin() -> bool {
-        true
-    }
-
-    pub fn class(&self) -> CharacterClass {
-        self.class.clone()
-    }
-
-    pub fn name(&self) -> String {
-        self.builtin.name()
-    }
-
-    pub fn description(&self) -> String {
-        self.builtin.description()
-    }
-
-    pub fn repr(&self) -> String {
-        format!(
-            "BuiltinCharacterImpl(name: {}, description: {}, class: {})",
-            &self.name(),
-            &self.description(),
-            &self.class.name()
-        )
-    }
-}
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Vamp;
 
-impl BuiltinCharacter for Vamp {
-    #[must_use]
-    fn new() -> BuiltinCharacterImpl {
-        let main = Weapon::new(WeaponType::Submachine);
-        let seondary = Weapon::new(WeaponType::Lethalmachine);
-
-        BuiltinCharacterImpl {
-            class: CharacterClass::Vampire,
-            builtin: box BuiltinChar::Vamp,
-            health: Health::new(),
-            inventory: Inventory::new(
-                vec![],               // Items. This is currently empty.
-                vec![main, seondary], // Weapons
-            ),
-        }
-    }
-}
-
 #[derive(PartialEq, Debug, Clone)]
 pub struct Yemoja;
-
-impl BuiltinCharacter for Yemoja {
-    #[must_use]
-    fn new() -> BuiltinCharacterImpl {
-        let main = Weapon::new(WeaponType::Submachine);
-        let seondary = Weapon::new(WeaponType::Magicalmachine);
-        BuiltinCharacterImpl {
-            class: CharacterClass::Warlock,
-            builtin: box BuiltinChar::Yemoja,
-            health: Health::new(),
-            inventory: Inventory::new(
-                vec![],               // Items. This is currently empty.
-                vec![main, seondary], // Weapons
-            ),
-        }
-    }
-}
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Susanoo;
 
-impl BuiltinCharacter for Susanoo {
-    #[must_use]
-    fn new() -> BuiltinCharacterImpl {
-        let main = Weapon::new(WeaponType::Submachine);
-        let seondary = Weapon::new(WeaponType::Blade);
-
-        BuiltinCharacterImpl {
-            class: CharacterClass::Assassin,
-            builtin: box BuiltinChar::Susanoo,
-            health: Health::new(),
-            inventory: Inventory::new(
-                vec![],               // Items. This is currently empty.
-                vec![main, seondary], // Weapons
-            ),
-        }
-    }
-}
-
 #[derive(PartialEq, Debug, Clone)]
 pub struct Tyr;
-
-impl BuiltinCharacter for Tyr {
-    #[must_use]
-    fn new() -> BuiltinCharacterImpl {
-        let main = Weapon::new(WeaponType::Submachine);
-        let seondary = Weapon::new(WeaponType::Machinegun);
-
-        BuiltinCharacterImpl {
-            class: CharacterClass::Warrior,
-            builtin: box BuiltinChar::Tyr,
-            health: Health::new(),
-            inventory: Inventory::new(
-                vec![],               // Items. This is currently empty.
-                vec![main, seondary], // Weapons
-            ),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::borrow::Borrow;
-
-    use super::*;
-
-    #[test]
-    fn test_vamp() {
-        let mut vamp = Vamp::new();
-        println!("{}", vamp.repr());
-
-        let vamp_weapons = vamp
-            .inventory
-            .get_weapons()
-            .iter()
-            .map(|w| w.borrow().name())
-            .collect::<Vec<&str>>();
-        println!("{}", vamp_weapons.join("\n"));
-
-        println!("{}", vamp.health.get_health());
-
-        vamp.health.drip_random();
-        println!("{}", vamp.health);
-
-        vamp.health.incr(10);
-        println!("{}", vamp.health);
-        vamp.health.drip(2);
-        println!("{}", vamp.health.regen());
-
-        assert_eq!(vamp.class, CharacterClass::Vampire);
-        assert_eq!(vamp.builtin, box BuiltinChar::Vamp);
-    }
-
-    #[test]
-    fn test_yemoja() {
-        let yemoja = Yemoja::new();
-        println!("{}", yemoja.repr());
-        assert_eq!(yemoja.class, CharacterClass::Warlock);
-        assert_eq!(yemoja.name(), "Yemoja");
-        assert_eq!(yemoja.builtin, box BuiltinChar::Yemoja);
-    }
-
-    #[test]
-    fn test_susanoo() {
-        let sus = Susanoo::new();
-        println!("{}", sus.repr());
-        assert_eq!(sus.name(), "Susanoo");
-        assert_eq!(sus.class, CharacterClass::Assassin);
-        assert_eq!(sus.builtin, box BuiltinChar::Susanoo)
-    }
-
-    #[test]
-    fn test_tyr() {
-        let tyr = Tyr::new();
-        println!("{}", tyr.borrow().repr());
-        assert_eq!(tyr.class, CharacterClass::Warrior);
-        assert_eq!(tyr.builtin, box BuiltinChar::Tyr);
-    }
-}

@@ -28,8 +28,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// A struct that generates data for our objects.
-pub trait Generator<T> {
-    fn generate_name(&self) -> Vec<&'static str>;
-    fn auto_name(&self) -> Result<&'static str, Box<dyn std::error::Error>>;
-}
+pub mod armor;
+pub mod health;
+pub mod inventory;
+pub mod items;
+pub mod weapon;
