@@ -59,7 +59,6 @@ pub enum ItemType {
 }
 
 impl Generator for ItemType {
-
     fn generate_name(&self) -> Vec<&'static str> {
         match &self {
             ItemType::Weapon => todo!(),

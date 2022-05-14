@@ -28,13 +28,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::items::{
-    Item,
-    ItemRarity,
-    MetaData,
-    Generator,
-    ItemType,
-};
+use crate::items::{Generator, Item, ItemRarity, ItemType, MetaData};
 
 use rand::prelude::SliceRandom;
 use rand::{random, thread_rng};
@@ -111,22 +105,26 @@ impl MetaData for WeaponType {
     fn description(&self) -> &'static str {
         match self {
             WeaponType::Bow => {
-                concat!("A Standard primary bow that all players start with. ",
-                "Hits with this weapon deals bonus True damage and a chance to freeze them."
-                )
-            },
-            WeaponType::Mace => {
-                concat!("A one handed heavy weapon that requires strength. ",
-                "Hits with this weapon provides a chance to burn the enemy."
-                )
-            },
-            WeaponType::Claw => {
                 concat!(
-                    "An powerful lethal weapon that bleedes enemies every 3 successful hits",
+                    "A Standard primary bow that all players start with. ",
+                    "Hits with this weapon deals bonus True damage and a chance to freeze them."
                 )
             }
-            WeaponType::Rod => "A high velocity, Ranged, Magical weapon that can stun enemies on hits.",
-            WeaponType::Daggers => "Slash through enemies quickly. Rapid kills provides a chance to toxin enemies.",
+            WeaponType::Mace => {
+                concat!(
+                    "A one handed heavy weapon that requires strength. ",
+                    "Hits with this weapon provides a chance to burn the enemy."
+                )
+            }
+            WeaponType::Claw => {
+                concat!("An powerful lethal weapon that bleedes enemies every 3 successful hits",)
+            }
+            WeaponType::Rod => {
+                "A high velocity, Ranged, Magical weapon that can stun enemies on hits."
+            }
+            WeaponType::Daggers => {
+                "Slash through enemies quickly. Rapid kills provides a chance to toxin enemies."
+            }
         }
     }
 

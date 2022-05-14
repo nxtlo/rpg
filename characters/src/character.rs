@@ -28,24 +28,27 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use components::{
+pub(crate) use components::{
     health::Health,
     inventory::Inventory,
+    items::MetaData,
+    weapon::Weapon,
     // weapon,
 };
-use std::sync::Arc;
+use std::cell::Cell;
+use std::fmt::Display;
 
 /// Core character classes.
 ///
 /// For more information run.
 ///
 /// ```
-/// use characters::CharacterClass;
+/// use characters::{CharacterClass, components::MetaData};
 ///
 /// let assassin = CharacterClass::Assassin;
-/// assassin.description();
+/// println!("{}", assassin.name());
 /// ```
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum CharacterClass {
     Warrior,
     Warlock,
@@ -59,139 +62,243 @@ impl Default for CharacterClass {
     }
 }
 
-impl CharacterClass {
+impl MetaData for CharacterClass {
     /// Returns the string version of the character type name.
     ///
     /// ## Returns
     /// [`String`]
     /// The character enum field name as a String.
-    pub fn name(&self) -> String {
+    fn name(&self) -> &'static str {
         match self {
-            CharacterClass::Warrior => "Warrior".to_string(),
-            CharacterClass::Warlock => "Warlock".to_string(),
-            CharacterClass::Vampire => "Vampire".to_string(),
-            CharacterClass::Assassin => "Assassin".to_string(),
+            CharacterClass::Warrior => "Warrior",
+            CharacterClass::Warlock => "Warlock",
+            CharacterClass::Vampire => "Vampire",
+            CharacterClass::Assassin => "Assassin",
         }
     }
 
     /// Small description/lore about the character's background
-    pub fn description(&self) -> String {
-        "TODO".to_string()
+    fn description(&self) -> &'static str {
+        todo!()
     }
 }
 
 /// Builtin character enum.
-#[derive(PartialEq, Debug, Clone)]
-enum BuiltinCharacter {
+#[derive(PartialEq, Eq, Debug)]
+pub enum BuiltinCharacter {
     Tyr,
     Yemoja,
     Vamp,
     Susanoo,
 }
 
-impl BuiltinCharacter {
-    pub fn name(&self) -> String {
+impl MetaData for BuiltinCharacter {
+    fn name(&self) -> &'static str {
         match self {
-            Self::Tyr => "Tyr".to_string(),
-            Self::Yemoja => "Yemoja".to_string(),
-            Self::Vamp => "Vamp".to_string(),
-            Self::Susanoo => "Susanoo".to_string(),
+            Self::Tyr => "Tyr",
+            Self::Yemoja => "Yemoja",
+            Self::Vamp => "Vamp",
+            Self::Susanoo => "Susanoo",
         }
     }
 
     /// Small description/lore about the character's background
-    pub fn description(&self) -> String {
+    fn description(&self) -> &'static str {
         match self {
-            Self::Tyr => r#"
+            Self::Tyr => {
+                r#"
                 The most glittering of gods, Tyr, who,
                 like the Vanir, is gifted with the gift of foresight,
                 and top him off with a stylish headdress.
             "#
-            .to_string(),
-            Self::Yemoja => r#"
+            }
+            Self::Yemoja => {
+                r#"
                 Mother of origins, guardian
                 of passages, generator of new life in flood waters, orgasm,
                 birth waters, baptism.
             "#
-            .to_string(),
-            Self::Vamp => "Lie in wait inside the walls to hunt the strays.
+            }
+            Self::Vamp => {
+                "Lie in wait inside the walls to hunt the strays.
             Disorient your foes senses before taking their life.
             "
-            .to_string(),
-            Self::Susanoo => r#"
+            }
+            Self::Susanoo => {
+                r#"
             I will create a worldly paradise in this land.
             A place of peace and prosperity.
             An ideal country for those who live in suffering..
             "#
-            .to_string(),
+            }
         }
     }
 }
 
-pub trait Character {
-    fn new() -> CharacterImpl;
-    fn name(&self) -> String;
-    fn inventory(&self) -> &Inventory;
+/// Core trait that all characters must implement from.
+pub trait Character: Send {
+    // Is this needed to send the char to other threads?
+    fn new() -> Self
+    where
+        Self: Sized;
+    fn inventory(&mut self) -> &mut Inventory;
     fn health(&self) -> &Health;
-    fn description(&self) -> String;
+    fn class(&self) -> &CharacterClass;
     fn is_builtin(&self) -> bool {
         false
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CharacterImpl<Cc = CharacterClass> {
-    class: Cc,
-    health: Arc<Health>,
-    inventory: Arc<Inventory>,
+impl Display for Box<dyn Character> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}, {}", self.class().name(), self.health())
+    }
 }
 
-impl Default for CharacterImpl {
-    fn default() -> Self {
+#[derive(Debug, Clone)]
+pub struct CharacterBuilder {
+    class: CharacterClass,
+    health: Health,
+    inventory: Inventory,
+}
+
+/// A character builder object.
+impl CharacterBuilder {
+    pub fn new() -> Self
+    where
+        Self: Sized,
+    {
         Self {
             class: CharacterClass::default(),
-            health: Arc::new(Health::default()),
-            inventory: Arc::new(Inventory::default()),
+            health: Health::default(),
+            inventory: Inventory::new(),
+        }
+    }
+
+    pub fn class(&mut self, class: CharacterClass) -> &mut Self {
+        self.class = class;
+        self
+    }
+
+    pub fn health(&mut self, health: &Health) -> &mut Self {
+        self.health = *health;
+        self
+    }
+
+    pub fn inventory(&mut self, inventory: &Inventory) -> &mut Self {
+        self.inventory = inventory.to_owned();
+        self
+    }
+
+    pub fn finish(&self) -> Box<dyn Character> {
+        match self.class {
+            CharacterClass::Vampire => Box::new(Vamp::build(&self.health, &self.inventory)),
+            _ => todo!(),
         }
     }
 }
 
-impl Character for CharacterImpl {
-    fn new() -> CharacterImpl {
-        CharacterImpl::default()
+/// Builtin vampire character.
+pub struct Vamp {
+    class: CharacterClass,
+    health: Health,
+    inventory: Cell<Inventory>,
+}
+
+impl std::fmt::Display for Vamp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Vamp(description: {}, health: {})",
+            self.about().description(),
+            self.health()
+        )
+    }
+}
+
+// Base impl that all builtin characters impls.
+impl Vamp {
+    /// Return information about the builtin vamp character.
+    pub fn about(&self) -> BuiltinCharacter {
+        BuiltinCharacter::Vamp
     }
 
-    fn name(&self) -> String {
-        self.class.name()
+    /// Build an empty vampire character.
+    pub fn build(health: &Health, inventory: &Inventory) -> Self {
+        Self {
+            class: CharacterClass::Vampire,
+            health: health.to_owned(),
+            inventory: Cell::new(inventory.to_owned()),
+        }
+    }
+}
+
+impl Character for Vamp {
+    /// Create a new vampire character.
+    fn new() -> Vamp {
+        let mut inventory = Inventory::default();
+        inventory.put_weapon(Weapon::default()).unwrap();
+        Vamp::build(&Health::default(), &inventory)
     }
 
-    fn inventory(&self) -> &Inventory {
-        &self.inventory
+    fn class(&self) -> &CharacterClass {
+        &self.class
+    }
+
+    fn is_builtin(&self) -> bool {
+        true
+    }
+
+    fn inventory(&mut self) -> &mut Inventory {
+        self.inventory.get_mut()
     }
 
     fn health(&self) -> &Health {
         &self.health
     }
-
-    fn description(&self) -> String {
-        self.class.description()
-    }
-
-    fn is_builtin(&self) -> bool {
-        false
-    }
 }
 
-// Builtin characters.
+// TODO: impl these.
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct Vamp;
-
-#[derive(PartialEq, Debug, Clone)]
+/// Builtin yemoja character.
 pub struct Yemoja;
 
-#[derive(PartialEq, Debug, Clone)]
+/// Builtin Susanoo character.
 pub struct Susanoo;
 
-#[derive(PartialEq, Debug, Clone)]
+/// Builtin Tyr character.
 pub struct Tyr;
+
+#[cfg(test)]
+mod test {
+    use components::items::Item;
+    use components::items::ItemType;
+
+    use super::*;
+
+    #[test]
+    fn test_vamp_build() {
+        let mut vamp = CharacterBuilder::new()
+            .class(CharacterClass::Vampire)
+            .inventory(&Inventory::new())
+            .health(&Health::new(Some(50)))
+            .finish();
+        println!("{}", vamp.inventory());
+    }
+
+    #[test]
+    fn test_vamp_basic() {
+        let mut vamp = Vamp::new();
+        println!("{}", vamp);
+        assert_eq!(vamp.class(), &CharacterClass::Vampire);
+        assert_eq!(vamp.health().get_health(), &100);
+        for weapon in vamp
+            .inventory()
+            .get_weapons()
+            .iter()
+            .find(|w| w.item_type() == ItemType::Weapon)
+        {
+            println!("{}", weapon.name());
+        }
+    }
+}

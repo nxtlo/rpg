@@ -50,6 +50,12 @@ impl Default for Inventory {
     }
 }
 
+impl std::fmt::Display for Inventory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Inventory(weapons: {:?})", self.weapons)
+    }
+}
+
 impl Inventory {
     /// Creates a new inventory object.
     pub fn new() -> Inventory {
@@ -68,13 +74,11 @@ impl Inventory {
         self.weapons.to_vec()
     }
 
-    pub fn put_weapon(&mut self, weapon: &Weapon) -> anyhow::Result<()> {
+    pub fn put_weapon(&mut self, weapon: Weapon) -> anyhow::Result<()> {
         if self.is_full() {
             return Err(anyhow::anyhow!("Inventory is full"));
         }
-
-        self.weapons.push(weapon.to_owned());
-
+        self.weapons.push(weapon);
         Ok(())
     }
 }

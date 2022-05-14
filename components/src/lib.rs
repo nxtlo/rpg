@@ -33,3 +33,11 @@ pub mod health;
 pub mod inventory;
 pub mod items;
 pub mod weapon;
+
+pub use self::{
+    armor::ArmorType,
+    health::Health,
+    inventory::Inventory,
+    items::{MetaData, Generator, Item, ItemType, ItemRarity},
+    weapon::{Weapon, WeaponAmmoType, WeaponType},
+};

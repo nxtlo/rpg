@@ -30,4 +30,5 @@
 
 pub mod character;
 
-pub use self::character::{Character, CharacterClass, CharacterImpl, Susanoo, Tyr, Vamp, Yemoja};
+pub use self::character::{Character, CharacterClass, Susanoo, Tyr, Vamp, Yemoja};
+pub use components;

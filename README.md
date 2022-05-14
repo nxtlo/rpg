@@ -1,2 +1,2 @@
 # rpg
-An RPG game simulation.
+An RPG game components.
