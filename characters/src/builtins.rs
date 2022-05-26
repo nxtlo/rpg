@@ -29,74 +29,77 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{
-    character::{BuiltinCharacter, Char, CharacterClass},
-    components::{Health, Inventory, Weapon},
+use components::{Inventory, Health};
+
+use crate::character::{
+    impl_builtin_character,
+    CharacterClass,
+    BuiltinCharacter,
 };
+use crate::stats::Stats;
+
 
 /// Builtin vamp character.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vamp {
-    class: CharacterClass,
-    health: Health,
-    inventory: Box<Inventory>,
+    pub(crate) class: CharacterClass,
+    pub(crate) inventory: Inventory,
+    pub(crate) health: Health,
+    pub(crate) stats: Stats,
 }
 
-impl std::fmt::Display for Vamp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Vamp(health: {})", self.health.current())
-    }
+#[derive(Debug, Clone, PartialEq)]
+pub struct Yemoja {
+    pub(crate) class: CharacterClass,
+    pub(crate) inventory: Inventory,
+    pub(crate) health: Health,
+    pub(crate) stats: Stats,
 }
-
-impl Vamp {
-    /// Return information about the builtin vamp character.
-    pub fn about(&self) -> BuiltinCharacter {
-        BuiltinCharacter::Vamp
-    }
-
-    /// Construct an empty vampire character.
-    pub fn build(health: Health, inventory: &Inventory) -> Self {
-        Self {
-            class: CharacterClass::Vampire,
-            health,
-            inventory: box inventory.clone(),
-        }
-    }
-}
-
-impl Char for Vamp {
-    /// Create a new vampire character.
-    fn new() -> Vamp {
-        let mut inventory = Inventory::default();
-        // Put default starter weapon in inventory.
-        inventory.put_weapon(Weapon::default()).unwrap();
-        Vamp::build(Health::default(), &inventory)
-    }
-
-    fn class(&self) -> &CharacterClass {
-        &self.class
-    }
-
-    fn is_builtin(&self) -> bool {
-        true
-    }
-
-    fn inventory(&self) -> Inventory {
-        *self.inventory.clone()
-    }
-
-    fn health(&self) -> &Health {
-        &self.health
-    }
-}
-
-// TODO: impl these.
-
-/// Builtin yemoja character.
-pub struct Yemoja;
 
 /// Builtin Susanoo character.
-pub struct Susanoo;
+#[derive(Debug, Clone, PartialEq)]
+pub struct Susanoo {
+    pub(crate) class: CharacterClass,
+    pub(crate) inventory: Inventory,
+    pub(crate) health: Health,
+    pub(crate) stats: Stats,
+}
 
 /// Builtin Tyr character.
-pub struct Tyr;
+#[derive(Debug, Clone, PartialEq)]
+pub struct Tyr {
+    pub(crate) class: CharacterClass,
+    pub(crate) inventory: Inventory,
+    pub(crate) health: Health,
+    pub(crate) stats: Stats,
+}
+
+impl_builtin_character!(Vamp, BuiltinCharacter::Vamp, CharacterClass::Vampire);
+impl_builtin_character!(Yemoja, BuiltinCharacter::Yemoja, CharacterClass::Warlock);
+impl_builtin_character!(Susanoo, BuiltinCharacter::Susanoo, CharacterClass::Assassin);
+impl_builtin_character!(Tyr, BuiltinCharacter::Tyr, CharacterClass::Warrior);
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::Char;
+
+    fn print(data: impl std::fmt::Display) {
+        println!("{}", data);
+    }
+
+    #[test]
+    fn test_vamp() {
+        let vamp = Vamp::new();
+        assert!(vamp.health().current() == 100);
+        assert!(!vamp.inventory().is_full());
+
+        for item in vamp.inventory().get_weapons() {
+            print!("{}", item.to_string());
+        }
+
+        assert_eq!(vamp.stats().movement_speed, 0);
+        print(vamp);
+    }
+}

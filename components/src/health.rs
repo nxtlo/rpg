@@ -177,8 +177,8 @@ impl Health {
     ///
     /// ## Returns
     /// [`u32`] The current health.
-    pub fn current(&self) -> &u32 {
-        &self.current_health
+    pub fn current(&self) -> u32 {
+        self.current_health
     }
 
     fn set_health(&mut self, health: u32) {
@@ -198,36 +198,36 @@ mod tests {
     #[test]
     fn test_health_regen() {
         let mut health = Health::default();
-        assert_eq!(health.current(), &100);
+        assert_eq!(health.current(), 100);
 
         health.drip(10);
-        assert_eq!(health.current(), &90);
+        assert_eq!(health.current(), 90);
         println!("{}", health);
 
         health.regen();
-        let h = *health.current();
+        let h = health.current();
         assert!(h <= 100 && h >= 90);
     }
 
     #[test]
     fn test_basic() {
         let mut health = Health::default();
-        assert_eq!(health.current(), &100);
+        assert_eq!(health.current(), 100);
 
         health.drip(10);
-        assert_eq!(health.current(), &90);
+        assert_eq!(health.current(), 90);
         println!("{}", health);
 
         health.incr(10).unwrap();
-        assert_eq!(health.current(), &100);
+        assert_eq!(health.current(), 100);
         println!("{}", health);
 
         let new_health = health.incr_random().unwrap();
-        assert_eq!(health.current(), &new_health);
+        assert_eq!(health.current(), new_health);
         println!("{}", health);
 
         health.kill();
-        assert_eq!(health.current(), &0);
+        assert_eq!(health.current(), 0);
         println!("{}", health);
     }
 
@@ -235,9 +235,9 @@ mod tests {
     fn test_health_incr_when_dead() {
         let mut health = Health::default();
         health.kill();
-        assert_eq!(health.current(), &0);
+        assert_eq!(health.current(), 0);
 
         health.incr(10).unwrap_or(0);
-        assert_eq!(health.current(), &0);
+        assert_eq!(health.current(), 0);
     }
 }

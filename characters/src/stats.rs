@@ -32,12 +32,12 @@ use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
 pub struct Stats {
-    mp5: u32,
-    hp5: u32,
-    health: u32,
-    evasion: u32,
-    movement_speed: u32,
-    attack_speed: usize,
+    pub mp5: u32,
+    pub hp5: u32,
+    pub health: u32,
+    pub evasion: u32,
+    pub movement_speed: u32,
+    pub attack_speed: usize,
 }
 
 impl Default for Stats {

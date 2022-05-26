@@ -34,6 +34,8 @@ pub(crate) use components::{
     items::MetaData,
     // weapon,
 };
+use crate::stats::Stats;
+
 use std::fmt::Display;
 
 /// Core character classes.
@@ -57,6 +59,69 @@ pub enum CharacterClass {
 impl Default for CharacterClass {
     fn default() -> Self {
         CharacterClass::Warrior
+    }
+}
+
+// Quick way to kill repeated code.
+pub(crate) macro impl_builtin_character {
+
+    ($character:ty, $builtin:expr, $class:expr) => {
+
+        impl ::std::fmt::Display for $character {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}(health: {})", $class.name(), self.health().current())
+            }
+        }
+
+        impl $character {
+            /// Return information about the builtin character.
+            pub fn about(&self) -> BuiltinCharacter {
+                $builtin
+            }
+
+            /// Construct an empty character.
+            pub fn build(health: &Health, inventory: &Inventory, stats: &Stats) -> Self {
+                Self {
+                    class: $class,
+                    health: health.clone(),
+                    inventory: inventory.clone(),
+                    stats: stats.clone(),
+                }
+            }
+        }
+
+        impl super::Char for $character {
+            /// Create a new character.
+            fn new() -> Self {
+                let mut inventory = Inventory::default();
+                // Put default starter weapon in inventory.
+                inventory.put_weapon(crate::components::Weapon::default()).unwrap();
+
+                // TODO: Each character should have different stats.
+                // i,e., Vampire should have more movement speed and Assasin should have more attack speed.
+                Self::build(&Health::default(), &inventory, &Stats::default())
+            }
+
+            fn class(&self) -> &CharacterClass {
+                &self.class
+            }
+
+            fn stats(&self) -> &Stats {
+                &self.stats
+            }
+
+            fn is_builtin(&self) -> bool {
+                true
+            }
+
+            fn inventory(&self) -> &Inventory {
+                &self.inventory
+            }
+
+            fn health(&self) -> &Health {
+                &self.health
+            }
+        }
     }
 }
 
@@ -131,9 +196,13 @@ pub trait Char: Send + Sync {
     fn new() -> Self
     where
         Self: Sized;
-    fn inventory(&self) -> Inventory;
+    /// Returns an immutable reference to the character's inventory.
+    fn inventory(&self) -> &Inventory;
+    /// Returns an immutable reference to the character's health.
     fn health(&self) -> &Health;
+    /// Returns an immutable reference for this character's class.
     fn class(&self) -> &CharacterClass;
+    fn stats(&self) -> &Stats;
     fn is_builtin(&self) -> bool {
         false
     }
