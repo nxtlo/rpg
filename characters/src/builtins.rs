@@ -1,3 +1,4 @@
+//! Builtin characters implementation.
 // BSD 3-Clause License
 
 // Copyright (c) 2022, nxtlo
@@ -28,63 +29,74 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! A crate includes all components a character can have. i.e., Inventory, Health, etc.
+use crate::{
+    character::{BuiltinCharacter, Char, CharacterClass},
+    components::{Health, Inventory, Weapon},
+};
 
-use crate::weapon::Weapon;
-
-/// Core object inventory component.
-///
-/// This includes weapons items it ownns, cosmetics, etc.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Inventory {
-    weapons: Vec<Weapon>,
-    max_size: u32,
+/// Builtin vamp character.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Vamp {
+    class: CharacterClass,
+    health: Health,
+    inventory: Box<Inventory>,
 }
 
-impl Default for Inventory {
-    fn default() -> Self {
-        Self {
-            weapons: Vec::new(),
-            max_size: 50,
-        }
-    }
-}
-
-impl Drop for Inventory {
-    fn drop(&mut self) {
-        self.weapons.clear();
-    }
-}
-
-impl std::fmt::Display for Inventory {
+impl std::fmt::Display for Vamp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Inventory(weapons: {})", self.weapons.len())
+        write!(f, "Vamp(health: {})", self.health.current())
     }
 }
 
-impl Inventory {
-    /// Creates a new inventory object.
-    pub fn new() -> Inventory {
-        Self::default()
+impl Vamp {
+    /// Return information about the builtin vamp character.
+    pub fn about(&self) -> BuiltinCharacter {
+        BuiltinCharacter::Vamp
     }
 
-    pub fn is_empty(&self) -> bool {
-        !self.is_full()
-    }
-
-    pub fn is_full(&self) -> bool {
-        self.max_size == (self.weapons.len() + 1) as u32
-    }
-
-    pub fn get_weapons(&self) -> Vec<Weapon> {
-        self.weapons.to_vec()
-    }
-
-    pub fn put_weapon(&mut self, weapon: Weapon) -> anyhow::Result<()> {
-        if self.is_full() {
-            return Err(anyhow::anyhow!("Inventory is full"));
+    /// Construct an empty vampire character.
+    pub fn build(health: Health, inventory: &Inventory) -> Self {
+        Self {
+            class: CharacterClass::Vampire,
+            health,
+            inventory: box inventory.clone(),
         }
-        self.weapons.push(weapon);
-        Ok(())
     }
 }
+
+impl Char for Vamp {
+    /// Create a new vampire character.
+    fn new() -> Vamp {
+        let mut inventory = Inventory::default();
+        // Put default starter weapon in inventory.
+        inventory.put_weapon(Weapon::default()).unwrap();
+        Vamp::build(Health::default(), &inventory)
+    }
+
+    fn class(&self) -> &CharacterClass {
+        &self.class
+    }
+
+    fn is_builtin(&self) -> bool {
+        true
+    }
+
+    fn inventory(&self) -> Inventory {
+        *self.inventory.clone()
+    }
+
+    fn health(&self) -> &Health {
+        &self.health
+    }
+}
+
+// TODO: impl these.
+
+/// Builtin yemoja character.
+pub struct Yemoja;
+
+/// Builtin Susanoo character.
+pub struct Susanoo;
+
+/// Builtin Tyr character.
+pub struct Tyr;

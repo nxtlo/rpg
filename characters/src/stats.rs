@@ -28,63 +28,84 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! A crate includes all components a character can have. i.e., Inventory, Health, etc.
+use std::fmt;
 
-use crate::weapon::Weapon;
-
-/// Core object inventory component.
-///
-/// This includes weapons items it ownns, cosmetics, etc.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Inventory {
-    weapons: Vec<Weapon>,
-    max_size: u32,
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
+pub struct Stats {
+    mp5: u32,
+    hp5: u32,
+    health: u32,
+    evasion: u32,
+    movement_speed: u32,
+    attack_speed: usize,
 }
 
-impl Default for Inventory {
+impl Default for Stats {
     fn default() -> Self {
-        Self {
-            weapons: Vec::new(),
-            max_size: 50,
+        Stats {
+            mp5: 0,
+            hp5: 0,
+            health: 0,
+            evasion: 0,
+            movement_speed: 0,
+            attack_speed: 0,
         }
     }
 }
 
-impl Drop for Inventory {
-    fn drop(&mut self) {
-        self.weapons.clear();
+impl fmt::Display for Stats {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            concat!(
+                "Stats(",
+                "MP5: {} ",
+                "HP5: {} ",
+                "Health: {} ",
+                "Evasion: {} ",
+                "Movement Speed: {} ",
+                "Attack Speed: {})",
+            ),
+            self.mp5, self.hp5, self.health, self.evasion, self.movement_speed, self.attack_speed
+        )
     }
 }
 
-impl std::fmt::Display for Inventory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Inventory(weapons: {})", self.weapons.len())
+impl Stats {}
+
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
+pub struct Resistense {
+    toxcin: u32,
+    elemental: u32,
+    void: u32,
+    radiant: u32,
+}
+
+impl fmt::Display for Resistense {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            concat!(
+                "Resistense(",
+                "Toxin: {} ",
+                "Elemental: {} ",
+                "Void: {} ",
+                "Radiant: {})",
+            ),
+            self.toxcin, self.elemental, self.void, self.radiant
+        )
     }
 }
 
-impl Inventory {
-    /// Creates a new inventory object.
-    pub fn new() -> Inventory {
-        Self::default()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        !self.is_full()
-    }
-
-    pub fn is_full(&self) -> bool {
-        self.max_size == (self.weapons.len() + 1) as u32
-    }
-
-    pub fn get_weapons(&self) -> Vec<Weapon> {
-        self.weapons.to_vec()
-    }
-
-    pub fn put_weapon(&mut self, weapon: Weapon) -> anyhow::Result<()> {
-        if self.is_full() {
-            return Err(anyhow::anyhow!("Inventory is full"));
+impl Default for Resistense {
+    fn default() -> Self {
+        Resistense {
+            toxcin: 0,
+            elemental: 0,
+            void: 0,
+            radiant: 0,
         }
-        self.weapons.push(weapon);
-        Ok(())
     }
 }
+
+impl Resistense {}

@@ -38,6 +38,6 @@ pub use self::{
     armor::ArmorType,
     health::Health,
     inventory::Inventory,
-    items::{MetaData, Generator, Item, ItemType, ItemRarity},
+    items::{Generator, Item, ItemRarity, ItemType, MetaData},
     weapon::{Weapon, WeaponAmmoType, WeaponType},
 };

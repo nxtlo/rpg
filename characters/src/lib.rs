@@ -28,7 +28,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod character;
+#![feature(box_syntax)]
 
-pub use self::character::{Character, CharacterClass, Susanoo, Tyr, Vamp, Yemoja};
+mod builtins;
+pub mod character;
+pub mod stats;
+
+pub use self::character::{Char, Character, CharacterClass};
+pub use builtins::*;
 pub use components;
+pub use stats::*;

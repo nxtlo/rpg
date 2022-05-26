@@ -68,7 +68,7 @@ impl PartialOrd<Health> for Health {
 
 impl std::fmt::Display for Health {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Health(hp: {})", self.get_health())
+        write!(f, "Health(hp: {})", self.current())
     }
 }
 
@@ -177,7 +177,7 @@ impl Health {
     ///
     /// ## Returns
     /// [`u32`] The current health.
-    pub fn get_health(&self) -> &u32 {
+    pub fn current(&self) -> &u32 {
         &self.current_health
     }
 
@@ -186,7 +186,7 @@ impl Health {
     }
 
     fn validate(&self) -> bool {
-        let curr_health = self.get_health();
+        let curr_health = self.current();
         !curr_health >= 100 || !curr_health <= 0
     }
 }
@@ -198,36 +198,36 @@ mod tests {
     #[test]
     fn test_health_regen() {
         let mut health = Health::default();
-        assert_eq!(health.get_health(), &100);
+        assert_eq!(health.current(), &100);
 
         health.drip(10);
-        assert_eq!(health.get_health(), &90);
+        assert_eq!(health.current(), &90);
         println!("{}", health);
 
         health.regen();
-        let h = *health.get_health();
+        let h = *health.current();
         assert!(h <= 100 && h >= 90);
     }
 
     #[test]
     fn test_basic() {
         let mut health = Health::default();
-        assert_eq!(health.get_health(), &100);
+        assert_eq!(health.current(), &100);
 
         health.drip(10);
-        assert_eq!(health.get_health(), &90);
+        assert_eq!(health.current(), &90);
         println!("{}", health);
 
         health.incr(10).unwrap();
-        assert_eq!(health.get_health(), &100);
+        assert_eq!(health.current(), &100);
         println!("{}", health);
 
         let new_health = health.incr_random().unwrap();
-        assert_eq!(health.get_health(), &new_health);
+        assert_eq!(health.current(), &new_health);
         println!("{}", health);
 
         health.kill();
-        assert_eq!(health.get_health(), &0);
+        assert_eq!(health.current(), &0);
         println!("{}", health);
     }
 
@@ -235,9 +235,9 @@ mod tests {
     fn test_health_incr_when_dead() {
         let mut health = Health::default();
         health.kill();
-        assert_eq!(health.get_health(), &0);
+        assert_eq!(health.current(), &0);
 
         health.incr(10).unwrap_or(0);
-        assert_eq!(health.get_health(), &0);
+        assert_eq!(health.current(), &0);
     }
 }
