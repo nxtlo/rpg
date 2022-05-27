@@ -29,53 +29,85 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use components::{Inventory, Health};
+use components::{Health, Inventory};
 
-use crate::character::{
-    impl_builtin_character,
-    CharacterClass,
-    BuiltinCharacter,
-};
+pub(super) use crate::character::{BuiltinCharacter, Char, CharacterClass, MetaData};
 use crate::stats::Stats;
 
+macro impl_builtin_character($name:ident, $builtin:expr, $class:expr) {
+    /// Builtin [$name] character.
+    #[derive(Clone, Debug, PartialEq)]
+    pub struct $name {
+        health: Health,
+        inventory: Inventory,
+        stats: Stats,
+        class: CharacterClass,
+    }
 
-/// Builtin vamp character.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Vamp {
-    pub(crate) class: CharacterClass,
-    pub(crate) inventory: Inventory,
-    pub(crate) health: Health,
-    pub(crate) stats: Stats,
-}
+    impl ::std::fmt::Display for $name {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "{}(class: {}, health: {})",
+                $builtin.name(),
+                $class.name(),
+                self.health().current(),
+            )
+        }
+    }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Yemoja {
-    pub(crate) class: CharacterClass,
-    pub(crate) inventory: Inventory,
-    pub(crate) health: Health,
-    pub(crate) stats: Stats,
-}
+    impl Into<super::character::BuiltinCharacter> for $name {
+        fn into(self) -> super::character::BuiltinCharacter {
+            $builtin
+        }
+    }
 
-/// Builtin Susanoo character.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Susanoo {
-    pub(crate) class: CharacterClass,
-    pub(crate) inventory: Inventory,
-    pub(crate) health: Health,
-    pub(crate) stats: Stats,
-}
+    impl super::Char for $name {
+        fn new() -> Self {
+            let mut inventory = Inventory::default();
+            // Put default starter weapon in inventory.
+            inventory
+                .put_weapon(crate::components::Weapon::default())
+                .unwrap();
 
-/// Builtin Tyr character.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Tyr {
-    pub(crate) class: CharacterClass,
-    pub(crate) inventory: Inventory,
-    pub(crate) health: Health,
-    pub(crate) stats: Stats,
+            // TODO: Each character should have different stats.
+            // i,e., Vampire should have more movement speed and Assasin should have more attack speed.
+            Self::build(&&inventory, &Stats::default(), &Health::default())
+        }
+
+        fn build(inventory: &Inventory, stats: &Stats, health: &Health) -> Self {
+            Self {
+                class: $class,
+                health: health.clone(),
+                inventory: inventory.clone(),
+                stats: stats.clone(),
+            }
+        }
+
+        fn class(&self) -> &CharacterClass {
+            &self.class
+        }
+
+        fn stats(&self) -> &Stats {
+            &self.stats
+        }
+
+        fn is_builtin(&self) -> bool {
+            true
+        }
+
+        fn inventory(&self) -> &Inventory {
+            &self.inventory
+        }
+
+        fn health(&self) -> &Health {
+            &self.health
+        }
+    }
 }
 
 impl_builtin_character!(Vamp, BuiltinCharacter::Vamp, CharacterClass::Vampire);
-impl_builtin_character!(Yemoja, BuiltinCharacter::Yemoja, CharacterClass::Warlock);
+impl_builtin_character!(Kain, BuiltinCharacter::Kain, CharacterClass::Warlock);
 impl_builtin_character!(Susanoo, BuiltinCharacter::Susanoo, CharacterClass::Assassin);
 impl_builtin_character!(Tyr, BuiltinCharacter::Tyr, CharacterClass::Warrior);
 
@@ -83,9 +115,8 @@ impl_builtin_character!(Tyr, BuiltinCharacter::Tyr, CharacterClass::Warrior);
 mod tests {
 
     use super::*;
-    use crate::Char;
 
-    fn print(data: impl std::fmt::Display) {
+    fn print(data: &impl std::fmt::Display) {
         println!("{}", data);
     }
 
@@ -96,10 +127,24 @@ mod tests {
         assert!(!vamp.inventory().is_full());
 
         for item in vamp.inventory().get_weapons() {
-            print!("{}", item.to_string());
+            print(&item);
         }
 
         assert_eq!(vamp.stats().movement_speed, 0);
-        print(vamp);
+        print(&vamp);
+    }
+
+    #[test]
+    fn test_build() {
+        let inventory = Inventory::new();
+        let health = Health::new(Some(200));
+        let stats = Stats::default();
+        let kain = Kain::build(&inventory, &stats, &health);
+        print(&kain);
+
+        assert!(kain.is_builtin());
+
+        let into_builtin: BuiltinCharacter = kain.into();
+        print(&into_builtin.description());
     }
 }

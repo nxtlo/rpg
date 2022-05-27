@@ -31,10 +31,10 @@
 #![feature(decl_macro)]
 
 mod builtins;
-pub mod character;
-pub mod stats;
+mod character;
+mod stats;
 
+pub use self::builtins::{Kain, Susanoo, Tyr, Vamp};
 pub use self::character::{Char, Character, CharacterClass};
-pub use builtins::*;
+pub use self::stats::{Resistense, Stats};
 pub use components;
-pub use stats::*;

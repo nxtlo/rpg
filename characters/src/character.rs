@@ -28,15 +28,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub(crate) use components::{
-    health::Health,
-    inventory::Inventory,
-    items::MetaData,
-    // weapon,
-};
 use crate::stats::Stats;
-
-use std::fmt::Display;
+pub(crate) use components::{health::Health, inventory::Inventory, items::MetaData};
 
 /// Core character classes.
 ///
@@ -59,69 +52,6 @@ pub enum CharacterClass {
 impl Default for CharacterClass {
     fn default() -> Self {
         CharacterClass::Warrior
-    }
-}
-
-// Quick way to kill repeated code.
-pub(crate) macro impl_builtin_character {
-
-    ($character:ty, $builtin:expr, $class:expr) => {
-
-        impl ::std::fmt::Display for $character {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{}(health: {})", $class.name(), self.health().current())
-            }
-        }
-
-        impl $character {
-            /// Return information about the builtin character.
-            pub fn about(&self) -> BuiltinCharacter {
-                $builtin
-            }
-
-            /// Construct an empty character.
-            pub fn build(health: &Health, inventory: &Inventory, stats: &Stats) -> Self {
-                Self {
-                    class: $class,
-                    health: health.clone(),
-                    inventory: inventory.clone(),
-                    stats: stats.clone(),
-                }
-            }
-        }
-
-        impl super::Char for $character {
-            /// Create a new character.
-            fn new() -> Self {
-                let mut inventory = Inventory::default();
-                // Put default starter weapon in inventory.
-                inventory.put_weapon(crate::components::Weapon::default()).unwrap();
-
-                // TODO: Each character should have different stats.
-                // i,e., Vampire should have more movement speed and Assasin should have more attack speed.
-                Self::build(&Health::default(), &inventory, &Stats::default())
-            }
-
-            fn class(&self) -> &CharacterClass {
-                &self.class
-            }
-
-            fn stats(&self) -> &Stats {
-                &self.stats
-            }
-
-            fn is_builtin(&self) -> bool {
-                true
-            }
-
-            fn inventory(&self) -> &Inventory {
-                &self.inventory
-            }
-
-            fn health(&self) -> &Health {
-                &self.health
-            }
-        }
     }
 }
 
@@ -148,9 +78,9 @@ impl MetaData for CharacterClass {
 
 /// Builtin character enum.
 #[derive(PartialEq, Eq, Debug)]
-pub enum BuiltinCharacter {
+pub(crate) enum BuiltinCharacter {
     Tyr,
-    Yemoja,
+    Kain,
     Vamp,
     Susanoo,
 }
@@ -159,13 +89,13 @@ impl MetaData for BuiltinCharacter {
     fn name(&self) -> &'static str {
         match self {
             Self::Tyr => "Tyr",
-            Self::Yemoja => "Yemoja",
+            Self::Kain => "Kain",
             Self::Vamp => "Vamp",
             Self::Susanoo => "Susanoo",
         }
     }
 
-    /// Small description/lore about the character's background
+    /// Lore about the character's background.
     fn description(&self) -> &'static str {
         match self {
             Self::Tyr => {
@@ -173,19 +103,19 @@ impl MetaData for BuiltinCharacter {
                 like the Vanir, is gifted with the gift of foresight,
                 and top him off with a stylish headdress."
             }
-            Self::Yemoja => {
-                "Mother of origins, guardian
-                of passages, generator of new life in flood waters, orgasm,
-                birth waters, baptism."
+            Self::Kain => {
+                concat!("Mother of origins, guardian of passages, generator of new life in flood waters, orgasm, birth waters, baptism.")
             }
             Self::Vamp => {
                 "Lie in wait inside the walls to hunt the strays.
                 Disorient your foes senses before taking their life."
             }
             Self::Susanoo => {
-                "I will create a worldly paradise in this land.
-            A place of peace and prosperity.
-            An ideal country for those who live in suffering."
+                concat!(
+                    "I will create a worldly paradise in this land.",
+                    "A place of peace and prosperity. ",
+                    "An ideal country for those who live in suffering."
+                )
             }
         }
     }
@@ -193,16 +123,19 @@ impl MetaData for BuiltinCharacter {
 
 /// Core trait that any character must implement from.
 pub trait Char: Send + Sync {
-    fn new() -> Self
-    where
-        Self: Sized;
+    /// The standard way to create a character.
+    fn new() -> Self;
+    /// Build a character giving it its components.
+    fn build(inventory: &Inventory, stats: &Stats, health: &Health) -> Self;
     /// Returns an immutable reference to the character's inventory.
     fn inventory(&self) -> &Inventory;
     /// Returns an immutable reference to the character's health.
     fn health(&self) -> &Health;
     /// Returns an immutable reference for this character's class.
     fn class(&self) -> &CharacterClass;
+    /// Returns an immutable reference to the character's stats.
     fn stats(&self) -> &Stats;
+    /// Whether this character is builtin or not. Defautls to `false`.
     fn is_builtin(&self) -> bool {
         false
     }
@@ -229,16 +162,5 @@ where
     #[must_use]
     pub fn new() -> CharImpl {
         <CharImpl as Char>::new()
-    }
-}
-
-impl<T: Char> Display for Character<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}(health: {})",
-            self.base.class().name(),
-            self.base.health().current(),
-        )
     }
 }
